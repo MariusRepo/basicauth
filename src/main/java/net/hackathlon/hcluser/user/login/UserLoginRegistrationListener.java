@@ -2,15 +2,18 @@ package net.hackathlon.hcluser.user.login;
 
 import lombok.extern.slf4j.Slf4j;
 import net.hackathlon.hcluser.configuration.rabbitmq.MQConfig;
+import net.hackathlon.hcluser.configuration.rabbitmq.MQMailMessage;
 import net.hackathlon.hcluser.configuration.rabbitmq.MQRegistrationMessage;
 import net.hackathlon.hcluser.user.registration.UserInfo;
 import net.hackathlon.hcluser.user.registration.UserInfoService;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
+import java.util.UUID;
 
 @Component
 @Slf4j
@@ -25,9 +28,12 @@ public class UserLoginRegistrationListener {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    @RabbitListener(queues = MQConfig.QUEUE)
+    @Autowired
+    RabbitTemplate template;
+
+    @RabbitListener(queues = MQConfig.REGISTRATION_QUEUE)
     public void registrationListener(MQRegistrationMessage message) {
-        log.info("Message: " + message + " received from queue: " + MQConfig.QUEUE);
+        log.info("Message: " + message + " received from queue: " + MQConfig.REGISTRATION_QUEUE);
         UserInfo userInfo = userInfoService
                 .findUserInfoById(message.getUserInfoId())
                 .orElseThrow();
@@ -39,13 +45,17 @@ public class UserLoginRegistrationListener {
 
         userService.storeUserCredentials(user);
 
-        sendEmail(message.getUserEmailId(),
+        sendEmailNotification(message.getUserEmailId(),
                 credentials.get("username"),
                 credentials.get("password"));
     }
 
-    private void sendEmail(String email, String username, String password) {
-        log.info("Email has been sent to: " + email + " | username: " + username + " | password: " + password);
+    private void sendEmailNotification(String email, String username, String password) {
+        log.info("EMail notification has been sent!");
+        template.convertAndSend(
+                MQConfig.EXCHANGE,
+                MQConfig.EMAIL_ROUTING,
+                new MQMailMessage(UUID.randomUUID().toString(), email, username, password));
     }
 
 }

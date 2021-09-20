@@ -30,7 +30,7 @@ public class UserRegistrationController {
         Long userInfoId = userInfoService.registerUserInfo(userInfo);
         template.convertAndSend(
                 MQConfig.EXCHANGE,
-                MQConfig.ROUTING,
+                MQConfig.REGISTRATION_ROUTING,
                 new MQRegistrationMessage(UUID.randomUUID().toString(), userInfoId, userInfo.getEmail_id()));
 
         return new ResponseEntity<>("Registration form submitted successfully! \n Please change the password before using the platform!", HttpStatus.CREATED);

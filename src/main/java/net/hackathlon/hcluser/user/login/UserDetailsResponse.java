@@ -5,16 +5,16 @@ import lombok.Data;
 @Data
 public class UserDetailsResponse {
 
-    private final String nid_name;
     private final Long id;
     private final String username;
-    private final String authority;
     private final String first_name;
     private final String last_name;
     private final String email_id;
+    private final String nid_name;
     private final String nid_doc_id;
     private final String primary_contact;
     private final String secondary_contact;
+    private final String authority;
 
     public UserDetailsResponse(User user) {
         this.id = user.getId();
